@@ -30,6 +30,7 @@
 #include "contiki.h"
 #include "contiki-lib.h"
 #include "contiki-net.h"
+#include "contiki-conf.h"
 
 #include <string.h>
 
@@ -42,9 +43,24 @@
 
 static struct uip_udp_conn *server_conn;
 
+#if TRANSMIT_ON
+static struct etimer et;
+#endif /* TRANSMIT_ON */
+
+#if SENSOR_ON
+PROCESS_NAME(adc_no2_sensor_process);
+#endif /* SENSOR_ON */
+
 PROCESS(udp_server_process, "UDP server process");
-AUTOSTART_PROCESSES(&resolv_process,&udp_server_process);
+
+AUTOSTART_PROCESSES(&resolv_process
+                    ,&udp_server_process
+#if SENSOR_ON
+                    ,&adc_no2_sensor_process
+#endif /* SENSOR_ON */
+                    );
 /*---------------------------------------------------------------------------*/
+#if (TRANSMIT_ON == 0 && RDC != 0)
 static void
 tcpip_handler(void)
 {
@@ -67,6 +83,7 @@ tcpip_handler(void)
     memset(&server_conn->ripaddr, 0, sizeof(server_conn->ripaddr));
   }
 }
+#endif /* (TRANSMIT_ON == 0) */
 /*---------------------------------------------------------------------------*/
 static void
 print_local_addresses(void)
@@ -109,12 +126,31 @@ PROCESS_THREAD(udp_server_process, ev, data)
   server_conn = udp_new(NULL, UIP_HTONS(3001), NULL);
   udp_bind(server_conn, UIP_HTONS(3000));
 
+#ifndef RDC
+#error "RDC is not yet defined"
+#endif
+#if !RDC
+  PRINTF("Switching off RADIO\n");
+  NETSTACK_MAC.off(0);
+#else /* !RDC */
+
   while(1) {
+
+#if TRANSMIT_ON
+    etimer_set(&et, SEND_INTERVAL);
+    PROCESS_YIELD_UNTIL(etimer_expired(&et));
+
+    PRINTF("Sending dummy data\n");
+    uip_udp_packet_send(server_conn, "dummy data", 10);
+
+#else /* TRANSMIT_ON */
     PROCESS_YIELD();
     if(ev == tcpip_event) {
       tcpip_handler();
     }
+#endif /* TRANSMIT_ON */
   }
+#endif /* (RDC == 0) */
 
   PROCESS_END();
 }
