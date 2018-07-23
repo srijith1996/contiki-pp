@@ -1,6 +1,7 @@
 #define TRANSMIT_ON 0
 #define SENSOR_ON   1
-#define RDC         2           
+#define RDC         2
+#define COMPUTE_ON  0
 
 /* RDC    0: OFF
  *        1: contikimac

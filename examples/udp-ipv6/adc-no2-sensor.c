@@ -12,6 +12,7 @@
 
 #if SENSOR_ON
 
+
 #define DEBUG DEBUG_PRINT
 #include "net/ip/uip-debug.h"
 /*---------------------------------------------------------------------------*/
@@ -52,7 +53,6 @@ PROCESS_THREAD(adc_no2_sensor_process, ev, data)
     no2_data.no2_2 /= (4096/3300); 
 		no2_data.no2_2 >>= 3;
     PRINTF("NO2 op2 %d\n", no2_data.no2_2);
-
 
   }
   PROCESS_END();

@@ -51,6 +51,10 @@ static struct etimer et;
 PROCESS_NAME(adc_no2_sensor_process);
 #endif /* SENSOR_ON */
 
+#if COMPUTE_ON
+int i = 0;
+#endif /* COMPUTE_ON */
+
 PROCESS(udp_server_process, "UDP server process");
 
 AUTOSTART_PROCESSES(&resolv_process
@@ -149,8 +153,16 @@ PROCESS_THREAD(udp_server_process, ev, data)
       tcpip_handler();
     }
 #endif /* TRANSMIT_ON */
+
+#if COMPUTE_ON
+    PRINTF("Computing loop.....\n");
+    for(i=0; i<1000; i++) {
+    }
+    PRINTF("Done\n");
+#endif /* COMPUTE_ON */
+
   }
-#endif /* (RDC == 0) */
+#endif /* !RDC */
 
   PROCESS_END();
 }

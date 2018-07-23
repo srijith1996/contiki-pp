@@ -2,6 +2,8 @@
  * Change hardware pin configuration for
  * NO2 sensor here
  */
+#if SENSOR_ON
+
 #define NO2_ADC_PIN1	ZOUL_SENSORS_ADC1
 #define NO2_ADC_PIN2	ZOUL_SENSORS_ADC3
 
@@ -14,3 +16,4 @@ struct no2_data {
   uint32_t sample_count;
 };
 
+#endif /* SENSOR_ON */
