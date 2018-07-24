@@ -43,17 +43,17 @@
 
 static struct uip_udp_conn *server_conn;
 
-#if TRANSMIT_ON
+#if (TRANSMIT_ON | COMPUTE_ON)
 static struct etimer et;
-#endif /* TRANSMIT_ON */
+#endif /* (TRANSMIT_ON | COMPUTE_ON) */
 
 #if SENSOR_ON
 PROCESS_NAME(adc_no2_sensor_process);
 #endif /* SENSOR_ON */
 
-#if COMPUTE_ON
-int i = 0;
-#endif /* COMPUTE_ON */
+#if (COMPUTE_ON | TRANSMIT_ON)
+unsigned long i = 0;
+#endif /* (COMPUTE_ON | TRANSMIT_ON) */
 
 PROCESS(udp_server_process, "UDP server process");
 
@@ -135,7 +135,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
 #endif
 #if !RDC
   PRINTF("Switching off RADIO\n");
-  NETSTACK_MAC.off(0);
+  NETSTACK_RDC.off(0);
 #else /* !RDC */
 
   while(1) {
@@ -145,7 +145,9 @@ PROCESS_THREAD(udp_server_process, ev, data)
     PROCESS_YIELD_UNTIL(etimer_expired(&et));
 
     PRINTF("Sending dummy data\n");
-    uip_udp_packet_send(server_conn, "dummy data", 10);
+    for(i=0; i<(1UL<<11);i++) {
+      uip_udp_packet_send(server_conn, "dummy data", 10);
+    }
 
 #else /* TRANSMIT_ON */
     PROCESS_YIELD();
@@ -153,17 +155,26 @@ PROCESS_THREAD(udp_server_process, ev, data)
       tcpip_handler();
     }
 #endif /* TRANSMIT_ON */
-
-#if COMPUTE_ON
-    PRINTF("Computing loop.....\n");
-    for(i=0; i<1000; i++) {
-    }
-    PRINTF("Done\n");
-#endif /* COMPUTE_ON */
-
   }
 #endif /* !RDC */
 
+#if COMPUTE_ON
+
+  while(1) {
+    etimer_set(&et, COMP_INTERVAL);
+    PROCESS_YIELD_UNTIL(etimer_expired(&et));
+
+    PRINTF("Computing loop.....\n");
+    for(i=0; i<(1UL<<20); i++) {
+      /* busy wait by incrementing counter i */
+    }
+    PRINTF("Done\n");
+
+  }
+
+#endif /* COMPUTE_ON */
+
+  PRINTF("Ending process\n");
   PROCESS_END();
 }
 /*---------------------------------------------------------------------------*/
